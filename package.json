@@ -1,0 +1,12 @@
+{
+  "name": "family-budget-app",
+  "version": "1.0.0",
+  "description": "אפליקציה משפחתית לניהול תקציב, הכנסות, הוצאות, חיסכון ומאזן שנתי",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": ["family-budget", "hebrew", "rtl", "budgeting", "finance", "dashboard"],
+  "author": "",
+  "license": "MIT"
+}

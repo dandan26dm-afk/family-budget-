@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ניהול תקציב משפחתי | Family Budget Web App</title>
+  <meta name="description" content="אפליקציה משפחתית מתקדמת לניהול תקציב, הכנסות, הוצאות, מעקב חיסכון, ייבוא/ייצוא אקסל ומאזן חודשי ושנתי בעברית.">
+  
+  <!-- SheetJS Library for Excel (.xlsx / .xls / .csv) Reading & Multi-Sheet Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/modal.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- Desktop RTL Sidebar Navigation -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-brand-icon">💰</div>
+        <div>
+          <h1 class="sidebar-brand-title">תקציב משפחתי</h1>
+          <div class="sidebar-brand-subtitle">ניהול פיננסי משותף</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <button class="sidebar-item active" data-view="dashboard">
+          <span class="sidebar-icon">📊</span>
+          <span>דשבורד</span>
+        </button>
+
+        <button class="sidebar-item" data-view="transactions">
+          <span class="sidebar-icon">📋</span>
+          <span>תנועות</span>
+        </button>
+
+        <button class="sidebar-item" data-view="categories">
+          <span class="sidebar-icon">🏷️</span>
+          <span>קטגוריות</span>
+        </button>
+
+        <button class="sidebar-item" data-view="savings">
+          <span class="sidebar-icon">🎯</span>
+          <span>יעדי חיסכון</span>
+        </button>
+
+        <button class="sidebar-item" data-view="importExport">
+          <span class="sidebar-icon">📥</span>
+          <span>ייבוא / ייצוא</span>
+        </button>
+
+        <button class="sidebar-item" data-view="settings">
+          <span class="sidebar-icon">⚙️</span>
+          <span>הגדרות</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div>100% פרטיות בדפדפן</div>
+        <div style="margin-top: 0.25rem; font-weight: 700;">גרסה 2.0 &bull; 2026</div>
+      </div>
+    </aside>
+
+    <!-- Main Content App Content Wrapper -->
+    <div class="app-content-wrapper">
+
+      <!-- Top App Navigation Header -->
+      <header class="app-header">
+        <div class="header-container">
+          <div class="brand-section">
+            <div class="brand-icon">💰</div>
+            <div>
+              <h1 class="brand-title">תקציב משפחתי</h1>
+              <div class="brand-subtitle">ניהול פיננסי משותף, פשוט ויומי</div>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <!-- Year & Month Selector Widget -->
+            <div class="period-selector-container">
+              <button id="btnPrevMonth" class="btn-arrow-month" title="חודש קודם">▶</button>
+              
+              <select id="selectMonth" class="period-select">
+                <option value="1">ינואר</option>
+                <option value="2">פברואר</option>
+                <option value="3">מרץ</option>
+                <option value="4">אפריל</option>
+                <option value="5">מאי</option>
+                <option value="6">יוני</option>
+                <option value="7" selected>יולי</option>
+                <option value="8">אוגוסט</option>
+                <option value="9">ספטמבר</option>
+                <option value="10">אוקטובר</option>
+                <option value="11">נובמבר</option>
+                <option value="12">דצמבר</option>
+              </select>
+
+              <select id="selectYear" class="period-select">
+                <option value="2023">2023</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026" selected>2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+              </select>
+
+              <button id="btnNextMonth" class="btn-arrow-month" title="חודש הבא">◀</button>
+            </div>
+
+            <button id="btnImportExportModal" class="btn btn-secondary desktop-only-btn" title="ייבוא וייצוא נתונים">
+              📥 ייבוא / ייצוא
+            </button>
+
+            <button id="btnAddTransaction" class="btn btn-primary desktop-only-btn">
+              ➕ הוספת תנועה
+            </button>
+
+            <button id="themeToggleBtn" class="btn btn-icon" title="החלפת ערכת נושא">
+              🌙
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Mobile Bottom Navigation Bar -->
+      <nav class="mobile-bottom-nav">
+        <button class="nav-item-mobile active" data-view="dashboard">
+          <span class="nav-icon">📊</span>
+          <span>דשבורד</span>
+        </button>
+
+        <button class="nav-item-mobile" data-view="transactions">
+          <span class="nav-icon">📋</span>
+          <span>תנועות</span>
+        </button>
+
+        <button id="fabAddTransaction" class="fab-add-btn" title="הוספת תנועה חדשה">
+          ➕
+        </button>
+
+        <button class="nav-item-mobile" data-view="categories">
+          <span class="nav-icon">🏷️</span>
+          <span>קטגוריות</span>
+        </button>
+
+        <button id="btnMobileMoreMenu" class="nav-item-mobile">
+          <span class="nav-icon">☰</span>
+          <span>עוד</span>
+        </button>
+      </nav>
+
+
+      <!-- Main Application Layout Content -->
+      <main class="main-layout">
+
+        <!-- Global KPI Summary Cards Grid -->
+        <section class="kpi-grid">
+          <div class="kpi-card income">
+            <div class="kpi-header">
+              <span class="kpi-title">הכנסות חודשיות</span>
+              <div class="kpi-icon-badge">📈</div>
+            </div>
+            <div id="kpiIncome" class="kpi-value" style="color: var(--color-income);">₪0</div>
+            <div class="kpi-subtext">סה"כ הכנסות ברוטו</div>
+          </div>
+
+          <div class="kpi-card expense">
+            <div class="kpi-header">
+              <span class="kpi-title">הוצאות חודשיות</span>
+              <div class="kpi-icon-badge">📉</div>
+            </div>
+            <div id="kpiExpense" class="kpi-value" style="color: var(--color-expense);">₪0</div>
+            <div class="kpi-subtext">סה"כ הוצאות שוטפות</div>
+          </div>
+
+          <div class="kpi-card balance">
+            <div class="kpi-header">
+              <span class="kpi-title">מאזן חודשי נטו</span>
+              <div class="kpi-icon-badge">⚖️</div>
+            </div>
+            <div id="kpiBalance" class="kpi-value">₪0</div>
+            <div class="kpi-subtext">מאזן פנוי בחודש זה</div>
+          </div>
+
+          <div class="kpi-card savings">
+            <div class="kpi-header">
+              <span class="kpi-title">גלגול יתרה מצטבר</span>
+              <div class="kpi-icon-badge">🐖</div>
+            </div>
+            <div id="kpiRollover" class="kpi-value" style="color: var(--color-savings);">₪0</div>
+            <div class="kpi-subtext">עודף מצטבר מתחילת השנה</div>
+          </div>
+        </section>
+
+        <!-- Monthly Trend Insight Comparison Badge -->
+        <div id="monthlyTrendBadgeContainer">
+          <!-- Dynamically rendered monthly trend card -->
+        </div>
+
+        <!-- Global Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-item">
+            <span class="filter-label">אדם / שיוך</span>
+            <select id="filterPerson" class="filter-select">
+              <option value="all">הכל (Софа, Даник, Вмести)</option>
+              <option value="Софа">Софа</option>
+              <option value="Даник">Даник</option>
+              <option value="Вмести">Вмести</option>
+            </select>
+
+          </div>
+
+          <div class="filter-item">
+            <span class="filter-label">קטגוריה</span>
+            <select id="filterCategory" class="filter-select">
+              <option value="all">כל הקטגוריות</option>
+            </select>
+          </div>
+
+          <div class="filter-item">
+            <span class="filter-label">סוג תנועה</span>
+            <select id="filterType" class="filter-select">
+              <option value="all">כל הסוגים</option>
+              <option value="expense">הוצאות</option>
+              <option value="income">הכנסות</option>
+              <option value="savings">חיסכון</option>
+            </select>
+          </div>
+
+          <div style="flex: 1; min-width: 220px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 חיפוש חופשי (תיאור, סכום, קטגוריה)...">
+          </div>
+        </div>
+
+        <!-- VIEW 1: DASHBOARD PAGE -->
+        <div id="viewDashboard" class="app-view-screen" style="display: block;">
+          
+          <!-- Top Analytics Row: Donut Chart + Bar Chart -->
+          <div class="analytics-row" style="margin-bottom: 1.5rem;">
+            
+            <div class="widget-card expense-pie-card">
+              <div class="widget-header">
+                <h2 class="widget-title">🍰 התפלגות הוצאות חזותית</h2>
+              </div>
+              <div id="categoryDonutContainer">
+                <!-- SVG Donut chart & legend -->
+              </div>
+            </div>
+
+            <div class="widget-card">
+              <div class="widget-header">
+                <h2 class="widget-title">📊 הכנסות מול הוצאות לפי חודשים</h2>
+              </div>
+              <div id="incomeExpenseChartContainer">
+                <!-- Bar chart -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Lower Grid: Recent Transactions & Partner Breakdown -->
+          <div class="dashboard-grid">
+            
+            <div class="widget-card">
+              <div class="widget-header">
+                <h2 class="widget-title">📋 תנועות אחרונות</h2>
+                <span id="txCountBadge" class="badge badge-person">0 תנועות</span>
+              </div>
+
+              <!-- Desktop Table -->
+              <div class="table-container desktop-table-container">
+                <table class="tx-table">
+                  <thead>
+                    <tr>
+                      <th>תאריך</th>
+                      <th>סכום</th>
+                      <th>סוג</th>
+                      <th>קטגוריה</th>
+                      <th>אדם</th>
+                      <th>תיאור / הערה</th>
+                      <th>פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody id="transactionsTableBody">
+                    <!-- Dynamically rendered rows -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Mobile List -->
+              <div id="mobileTransactionsList" class="mobile-tx-list">
+                <!-- Dynamically rendered touch cards -->
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+              
+              <!-- Couple Contribution -->
+              <div class="widget-card">
+                <div class="widget-header">
+                  <h2 class="widget-title">👥 חלוקה בין בני הזוג</h2>
+                </div>
+                <div id="personBreakdownContainer" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <!-- Partner breakdown -->
+                </div>
+              </div>
+
+              <!-- Detailed Category Progress Bars -->
+              <div class="widget-card">
+                <div class="widget-header">
+                  <h2 class="widget-title">📊 פירוט קטגוריות מלא</h2>
+                </div>
+                <div id="categoryBreakdownContainer" class="category-list">
+                  <!-- Category progress bars -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: FULL TRANSACTIONS MANAGEMENT PAGE -->
+        <div id="viewTransactions" class="app-view-screen" style="display: none;">
+          <div class="widget-card">
+            <div class="widget-header">
+              <div>
+                <h2 class="widget-title">📋 ניהול תנועות תקציב מלא</h2>
+                <div class="kpi-subtext" style="margin-top: 0.25rem;">
+                  צפייה, הוספה, עריכה, מחיקה וסינון מתקדם של כל הנתונים הפיננסיים שלכם.
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="document.getElementById('btnAddTransaction').click()">
+                ➕ הוספת תנועה חדשה
+              </button>
+            </div>
+
+            <!-- Full Transactions View Container -->
+            <div id="fullTransactionsContainer" style="margin-top: 1rem;">
+              <!-- Handled dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: CATEGORIES MANAGEMENT PAGE -->
+        <div id="viewCategories" class="app-view-screen" style="display: none;">
+          <!-- CategoriesRenderer injects content here -->
+        </div>
+
+        <!-- VIEW 4: SAVINGS GOALS PAGE -->
+        <div id="viewSavings" class="app-view-screen" style="display: none;">
+          <div class="widget-card">
+            <div class="widget-header">
+              <div>
+                <h2 class="widget-title">🎯 מעקב יעדי חיסכון ועתודות</h2>
+                <div class="kpi-subtext" style="margin-top: 0.25rem;">
+                  הגדרת יעדים פיננסיים כמו חופשה, שדרוג רכב, קרן חירום או לימודים, ומעקב התקדמות.
+                </div>
+              </div>
+              <button id="btnAddGoalBtn" class="btn btn-primary">
+                ➕ הוספת יעד חיסכון
+              </button>
+            </div>
+            
+            <div id="savingsGoalsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.25rem;">
+              <!-- Savings goals cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 5: IMPORT / EXPORT WIZARD PAGE -->
+        <div id="viewImportExport" class="app-view-screen" style="display: none;">
+          <!-- ImportExportRenderer injects content here -->
+        </div>
+
+        <!-- VIEW 6: SETTINGS PAGE -->
+        <div id="viewSettings" class="app-view-screen" style="display: none;">
+          <!-- SettingsRenderer injects content here -->
+        </div>
+
+      </main>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div>אפליקציה לניהול תקציב משפחתי &bull; נתונים שמורים בדפדפן המקומי שלכם בלבד &bull; 100% פרטיות</div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- MODAL 1: ADD / EDIT TRANSACTION -->
+  <div id="txModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="txModalTitle" class="modal-title">הוספת תנועה חדשה</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="txForm">
+        <div class="modal-body">
+          <input type="hidden" id="txTypeInput" value="expense">
+
+          <!-- Type Selector Buttons -->
+          <div class="form-group">
+            <label class="form-label">סוג תנועה</label>
+            <div class="type-selector-buttons">
+              <button type="button" class="type-btn active" data-type="expense">📉 הוצאה</button>
+              <button type="button" class="type-btn" data-type="income">📈 הכנסה</button>
+              <button type="button" class="type-btn" data-type="savings">🐖 חיסכון</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem;">
+            <div class="form-group">
+              <label class="form-label" for="txDate">תאריך</label>
+              <input type="date" id="txDate" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="txAmount">סכום (₪)</label>
+              <input type="number" id="txAmount" class="form-input" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem;">
+            <div class="form-group">
+              <label class="form-label" for="txCategory">קטגוריה</label>
+              <select id="txCategory" class="form-select" required>
+                <!-- Filled dynamically -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="txSubcategory">תת-קטגוריה (אופציונלי)</label>
+              <input type="text" id="txSubcategory" class="form-input" placeholder="כגון: סופר, דלק, חשמל...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="txPerson">שיוך אדם / גורם</label>
+            <select id="txPerson" class="form-select">
+              <!-- Filled dynamically -->
+            </select>
+          </div>
+
+
+          <div class="form-group">
+            <label class="form-label" for="txNote">תיאור / הערה</label>
+            <input type="text" id="txNote" class="form-input" placeholder="כגון: קניות לשבת, חשבון חשמל...">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-cancel-modal">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירת תנועה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD / EDIT SAVINGS GOAL -->
+  <div id="goalModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="goalModalTitle" class="modal-title">הוספת יעד חיסכון</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="goalForm">
+        <div class="modal-body">
+          <input type="hidden" id="goalIdInput">
+
+          <div class="form-group">
+            <label class="form-label" for="goalNameInput">שם היעד</label>
+            <input type="text" id="goalNameInput" class="form-input" placeholder="כגון: חופשה ביוון, שדרוג רכב, קרן חירום..." required>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem;">
+            <div class="form-group">
+              <label class="form-label" for="goalTargetInput">סכום יעד סופי (₪)</label>
+              <input type="number" id="goalTargetInput" class="form-input" step="100" placeholder="20000" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="goalCurrentInput">סכום נחסך נוכחי (₪)</label>
+              <input type="number" id="goalCurrentInput" class="form-input" step="100" placeholder="0" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem;">
+            <div class="form-group">
+              <label class="form-label" for="goalDateInput">תאריך יעד למילוי</label>
+              <input type="date" id="goalDateInput" class="form-input" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="goalIconInput">אייקון (Emoji)</label>
+              <input type="text" id="goalIconInput" class="form-input" placeholder="🎯" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-cancel-modal">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירת יעד</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: MOBILE MORE MENU SHEET -->
+  <div id="mobileMenuModal" class="modal-backdrop">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 class="modal-title">📱 ניווט ותפריט מהיר</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="dashboard" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            📊 דשבורד
+          </button>
+
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="transactions" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            📋 תנועות
+          </button>
+
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="categories" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            🏷️ קטגוריות
+          </button>
+
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="savings" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            🎯 יעדי חיסכון
+          </button>
+
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="importExport" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            📥 ייבוא / ייצוא
+          </button>
+
+          <button class="btn btn-secondary mobile-menu-nav-btn" data-view="settings" style="justify-content: flex-start; min-height: 54px; font-size: 1rem;">
+            ⚙️ הגדרות
+          </button>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border-color); margin: 0.5rem 0;">
+
+        <div style="display: flex; gap: 0.75rem;">
+          <button id="btnMobileThemeToggle" class="btn btn-secondary" style="flex: 1;">
+            🌙 החלפת ערכת נושא
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
+
